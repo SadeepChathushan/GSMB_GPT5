@@ -6,6 +6,7 @@ import GsmbDashboard from "./pages/GsmbDashboard.jsx";
 import OwnerDashboard from "./pages/OwnerDashboard.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import POOpenCase from "./pages/POOpenCase.jsx";
 
 function Protected({ roles, children }) {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/police" element={<Protected roles={["POLICE","ADMIN"]}><PoliceDashboard /></Protected>} />
+        <Route path="/police/cases/:id" element={<Protected roles={["POLICE","ADMIN"]}><POOpenCase /></Protected>} />
         <Route path="/gsmb" element={<Protected roles={["GSMB","ADMIN"]}><GsmbDashboard /></Protected>} />
         <Route path="/owner" element={<Protected roles={["OWNER","ADMIN"]}><OwnerDashboard /></Protected>} />
 
