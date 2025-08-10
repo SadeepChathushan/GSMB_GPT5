@@ -1,17 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { Mail, Lock, Shield, Globe, Smartphone, Eye, EyeOff } from "lucide-react";
+import {
+  Mail, Lock, Shield, Smartphone, Eye, EyeOff, Languages
+} from "lucide-react";
 
 export default function Login() {
   const { login } = useAuth();
   const nav = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // UI-only; logic unchanged
+  const [showPassword, setShowPassword] = useState(false);
 
-  // 🔒 KEEPING YOUR ORIGINAL LOGIN LOGIC
+  // Language state + dropdown
+  const [language, setLanguage] = useState("en"); // en | si | ta
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const langMenuRef = useRef(null);
+
+  // ---- Translations ----
+  const translations = {
+    en: {
+      signIn: "Sign In",
+      chooseAuth: "Choose your authentication method",
+      continueWithGoogle: "Continue with Google",
+      mosipDigitalId: "MOSIP Digital ID",
+      comingSoon: "Coming Soon",
+      orContinue: "Or continue with email",
+      emailAddress: "Email Address",
+      enterEmail: "Enter your email",
+      password: "Password",
+      enterPassword: "Enter your password",
+      signInSecurely: "Sign In Securely",
+      securedBy: "Secured by government-grade encryption",
+      needHelp: "Need help accessing your account?",
+      contactSupport: "Contact Support",
+      protectedBy: "Protected by Sri Lankan Government Digital Security Standards"
+    },
+    si: {
+      signIn: "පුරනය වන්න",
+      chooseAuth: "ඔබේ සත්‍යාපන ක්‍රමය තෝරන්න",
+      continueWithGoogle: "Google සමඟ ඉදිරියට යන්න",
+      mosipDigitalId: "MOSIP ඩිජිටල් හැඳුනුම්පත",
+      comingSoon: "ළඟදීම",
+      orContinue: "නැතහොත් ඊමේල් සමඟ ඉදිරියට යන්න",
+      emailAddress: "ඊමේල් ලිපිනය",
+      enterEmail: "ඔබේ ඊමේල් ඇතුළත් කරන්න",
+      password: "මුරපදය",
+      enterPassword: "ඔබේ මුරපදය ඇතුළත් කරන්න",
+      signInSecurely: "ආරක්ෂිතව පුරනය වන්න",
+      securedBy: "රජයේ මට්ටමේ සංකේතනය මගින් ආරක්ෂිතයි",
+      needHelp: "ඔබේ ගිණුමට ප්‍රවේශ වීමට උදව් අවශ්‍යද?",
+      contactSupport: "සහාය අමතන්න",
+      protectedBy: "ශ්‍රී ලංකා රජයේ ඩිජිටල් ආරක්ෂක ප්‍රමිතියන් මගින් ආරක්ෂිතයි"
+    },
+    ta: {
+      signIn: "உள்நுழைக",
+      chooseAuth: "உங்கள் அங்கீகார முறையைத் தேர்ந்தெடுக்கவும்",
+      continueWithGoogle: "Google உடன் தொடரவும்",
+      mosipDigitalId: "MOSIP டிஜிட்டல் அடையாள அட்டை",
+      comingSoon: "விரைவில்",
+      orContinue: "அல்லது மின்னஞ்சலுடன் தொடரவும்",
+      emailAddress: "மின்னஞ்சல் முகவரி",
+      enterEmail: "உங்கள் மின்னஞ்சலை உள்ளிடவும்",
+      password: "கடவுச்சொல்",
+      enterPassword: "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
+      signInSecurely: "பாதுகாப்பாக உள்நுழைக",
+      securedBy: "அரசாங்க தர குறியாக்கத்தால் பாதுகாக்கப்படுகிறது",
+      needHelp: "உங்கள் கணக்கை அணுக உதவி தேவையா?",
+      contactSupport: "ஆதரவைத் தொடர்புகொள்ளவும்",
+      protectedBy: "இலங்கை அரசாங்கத்தின் டிஜிட்டல் பாதுகாப்பு தரநிலைகளால் பாதுகாக்கப்படுகிறது"
+    }
+  };
+  const t = translations[language];
+
+  const languages = [
+    { code: "en", name: "English", flag: "🇬🇧" },
+    { code: "si", name: "සිංහල", flag: "🇱🇰" },
+    { code: "ta", name: "தமிழ்",  flag: "🇱🇰" }
+  ];
+
+  // Language order for cycling
+  const languageOrder = ["en", "si", "ta"];
+  const cycleLanguage = () => {
+    setLanguage(prev => {
+      const i = languageOrder.indexOf(prev);
+      return languageOrder[(i + 1) % languageOrder.length];
+    });
+  };
+
+  // Persist + apply selected language
+  useEffect(() => {
+    const saved = localStorage.getItem("app_lang");
+    if (saved && ["en", "si", "ta"].includes(saved)) setLanguage(saved);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("app_lang", language);
+    document.documentElement.lang = language;
+  }, [language]);
+
+  // Close language menu on outside click
+  useEffect(() => {
+    const onClick = (e) => {
+      if (!langMenuRef.current) return;
+      if (!langMenuRef.current.contains(e.target)) setShowLanguageMenu(false);
+    };
+    if (showLanguageMenu) document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [showLanguageMenu]);
+
+  const changeLanguage = (code) => {
+    setLanguage(code);
+    setShowLanguageMenu(false);
+  };
+
+  // Login flow
   async function submit(e) {
     e.preventDefault();
     const user = await login(email, password);
@@ -21,37 +124,82 @@ export default function Login() {
     else nav("/");
   }
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
-  };
-
-  const handleMosipLogin = () => {
-    console.log("MOSIP login clicked");
-  };
+  const handleGoogleLogin = () => console.log("Google login clicked");
+  const handleMosipLogin  = () => console.log("MOSIP login clicked");
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      {/* Your Navbar component */}
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#eef5ff] via-white to-[#e6f0ff]">
+      {/* Language Selector */}
+      <div className="fixed z-50 top-5 right-5" ref={langMenuRef}>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              if (e.shiftKey) {
+                setShowLanguageMenu(v => !v); // Shift+Click toggles dropdown
+              } else {
+                cycleLanguage();               // Click cycles language
+                setShowLanguageMenu(false);
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border border-gray-200 shadow-sm md:text-base bg-white/90 backdrop-blur rounded-xl hover:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            aria-haspopup="listbox"
+            aria-expanded={showLanguageMenu}
+            title="Click to switch language • Shift+Click to open menu"
+          >
+            <Languages className="w-5 h-5" />
+            <span className="hidden sm:inline">
+              {languages.find(l => l.code === language)?.name}
+            </span>
+            <span className="sm:hidden">
+              {languages.find(l => l.code === language)?.flag}
+            </span>
+          </button>
 
-      {/* Main: centered card. No page scroll on desktop; card can scroll on mobile */}
-      <div className="flex items-center justify-center flex-1 px-4">
-        <div className="w-full max-w-md overflow-hidden bg-white border border-gray-100 shadow-xl rounded-2xl">
+          {showLanguageMenu && (
+            <div
+              role="listbox"
+              className="absolute right-0 w-40 mt-2 overflow-hidden bg-white border border-gray-200 shadow-xl rounded-xl"
+            >
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  role="option"
+                  aria-selected={language === lang.code}
+                  onClick={() => changeLanguage(lang.code)}
+                  className={`w-full px-3 py-2.5 text-left text-sm md:text-base hover:bg-gray-50 flex items-center gap-2 ${
+                    language === lang.code ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                  }`}
+                >
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className="font-medium">{lang.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="flex items-center justify-center flex-1 px-3 py-8 sm:px-6">
+        <div className="w-full max-w-xl overflow-hidden border border-gray-100 shadow-2xl bg-white/95 backdrop-blur rounded-2xl">
           {/* Header */}
-          <div className="px-8 py-6 text-center bg-gradient-to-r from-blue-600 to-purple-600">
-            <h2 className="text-2xl font-bold text-white">Sign In</h2>
-            <p className="mt-1 text-sm text-blue-100">Choose your authentication method</p>
+          <div className="px-6 py-6 text-center md:px-10 md:py-8 bg-gradient-to-r from-blue-600 to-purple-600">
+            <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-3xl">
+              {t.signIn}
+            </h2>
+            <p className="mt-2 text-sm text-blue-100 md:text-base">
+              {t.chooseAuth}
+            </p>
           </div>
 
           {/* Body */}
-          <div className="p-8 overflow-y-auto max-h-[70vh] md:max-h-none md:overflow-visible">
-            {/* Alternative Login Methods */}
-            <div className="mb-6 space-y-3">
-              {/* Google Login */}
+          <div className="px-6 py-6 md:px-10 md:py-8">
+            {/* Alt logins */}
+            <div className="space-y-3 md:space-y-4">
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="flex items-center justify-center w-full gap-3 px-4 py-3 transition-all duration-200 border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md group"
+                className="flex items-center justify-center w-full gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-3.5 transition-all duration-200 border border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
               >
                 <div className="flex items-center justify-center w-5 h-5 bg-white border rounded shadow-sm">
                   <svg viewBox="0 0 24 24" className="w-4 h-4">
@@ -61,75 +209,82 @@ export default function Login() {
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
                 </div>
-                <span className="font-medium text-gray-700 group-hover:text-gray-900">
-                  Continue with Google
+                <span className="text-sm font-semibold text-gray-800 md:text-base">
+                  {t.continueWithGoogle}
                 </span>
               </button>
 
-              {/* MOSIP Login */}
               <button
                 type="button"
                 onClick={handleMosipLogin}
-                className="flex items-center justify-center w-full gap-3 px-4 py-3 transition-all duration-200 border border-orange-300 rounded-lg bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 hover:shadow-md group"
+                className="flex items-center justify-between w-full gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-3.5 transition-all duration-200 border border-orange-300 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 hover:shadow-md"
               >
-                <div className="flex items-center justify-center w-5 h-5 rounded bg-gradient-to-r from-orange-500 to-red-500">
-                  <Smartphone className="w-3 h-3 text-white" />
-                </div>
-                <span className="font-medium text-gray-700 group-hover:text-gray-900">MOSIP Digital ID</span>
-                <span className="px-2 py-1 text-xs text-orange-600 bg-orange-100 rounded-full">
-                  Coming Soon
+                <span className="inline-flex items-center gap-3">
+                  <span className="flex items-center justify-center w-5 h-5 rounded bg-gradient-to-r from-orange-500 to-red-500">
+                    <Smartphone className="w-3 h-3 text-white" />
+                  </span>
+                  <span className="text-sm font-semibold text-gray-800 md:text-base">
+                    {t.mosipDigitalId}
+                  </span>
+                </span>
+                <span className="px-2.5 py-1 text-xs font-semibold text-orange-700 bg-orange-100 rounded-full">
+                  {t.comingSoon}
                 </span>
               </button>
             </div>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-6 md:my-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 text-gray-500 bg-white">Or continue with email</span>
+              <div className="relative flex justify-center">
+                <span className="px-4 text-sm text-gray-500 bg-white md:text-base">
+                  {t.orContinue}
+                </span>
               </div>
             </div>
 
-            {/* Email/Password Form (your logic kept) */}
-            <form onSubmit={submit} className="space-y-5">
-              {/* Email */}
+            {/* Email / Password */}
+            <form onSubmit={submit} className="space-y-5 md:space-y-6">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                <label className="block text-sm font-semibold text-gray-800 md:text-base">
+                  {t.emailAddress}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <Mail className="w-5 h-5 text-gray-400" />
                   </div>
                   <input
                     type="email"
-                    className="block w-full py-3 pl-10 pr-3 transition-colors duration-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white"
-                    placeholder="Enter your email"
+                    className="block w-full py-3.5 md:py-4 pl-11 pr-4 text-base md:text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white"
+                    placeholder={t.enterEmail}
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <label className="block text-sm font-semibold text-gray-800 md:text-base">
+                  {t.password}
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <Lock className="w-5 h-5 text-gray-400" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="block w-full py-3 pl-10 pr-10 transition-colors duration-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white"
-                    placeholder="Enter your password"
+                    className="block w-full py-3.5 md:py-4 pl-11 pr-12 text-base md:text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white"
+                    placeholder={t.enterPassword}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4"
                     onClick={() => setShowPassword(v => !v)}
                   >
                     {showPassword ? (
@@ -141,53 +296,35 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Submit (same submit handler) */}
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3.5 md:py-4 px-4 rounded-xl text-base md:text-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Sign In Securely
+                {t.signInSecurely}
               </button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="p-4 mt-6 border border-blue-200 rounded-lg bg-blue-50">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                  <Globe className="w-3 h-3 text-blue-600" />
-                </div>
-                <div>
-                  <p className="mb-1 text-sm font-medium text-blue-900">Demo Access</p>
-                  <p className="text-xs text-blue-700">
-                    Email: <span className="px-1 font-mono bg-blue-100 rounded">gsmb@gov.lk</span>
-                  </p>
-                  <p className="mt-1 text-xs text-blue-700">
-                    Password: <span className="px-1 font-mono bg-blue-100 rounded">Password@123</span>
-                  </p>
-                  <p className="mt-2 text-xs italic text-blue-600">(Available after seed)</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Security Notice */}
-            <div className="mt-6 text-center">
-              <p className="flex items-center justify-center gap-1 text-xs text-gray-500">
-                <Shield className="w-3 h-3" />
-                Secured by government-grade encryption
+            {/* Security */}
+            <div className="mt-6 text-center md:mt-8">
+              <p className="flex items-center justify-center gap-2 text-xs text-gray-500 md:text-sm">
+                <Shield className="w-4 h-4" />
+                <span>{t.securedBy}</span>
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer (always visible, doesn’t push content to cause scroll on desktop) */}
-      <div className="py-4 text-center">
-        <p className="text-sm text-gray-600">
-          Need help accessing your account?{" "}
-          <button className="font-medium text-blue-600 hover:text-blue-700">Contact Support</button>
+      {/* Footer */}
+      <div className="px-4 py-5 text-center">
+        <p className="mb-1 text-xs text-gray-600 md:text-sm">
+          {t.needHelp}{" "}
+          <button className="font-semibold text-blue-600 hover:text-blue-700">
+            {t.contactSupport}
+          </button>
         </p>
-        <p className="text-xs text-gray-500">
-          Protected by Sri Lankan Government Digital Security Standards
+        <p className="text-[11px] md:text-xs leading-relaxed text-gray-500">
+          {t.protectedBy}
         </p>
       </div>
     </div>
