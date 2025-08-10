@@ -1,24 +1,35 @@
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { Shield, LogIn } from "lucide-react";
 
-export default function Navbar() {
-  const { user, logout } = useAuth();
+/**
+ * Reusable Navbar
+ * Props:
+ * - appName: string
+ * - loginLabel: string
+ * - onLogin: () => void
+ * - rightSlot: ReactNode (e.g., <LanguageSwitcher />)
+ */
+export default function Navbar({ appName, loginLabel, onLogin, rightSlot }) {
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="text-primary font-bold">GSMB MLVS</Link>
-        <nav className="flex items-center gap-4">
-          {!user && <Link to="/login" className="text-primary">Login</Link>}
-          {user && (
-            <>
-              {user.role === "POLICE" && <Link to="/police">Police</Link>}
-              {user.role === "GSMB" && <Link to="/gsmb">GSMB</Link>}
-              {user.role === "OWNER" && <Link to="/owner">Owner</Link>}
-              <button onClick={logout} className="btn btn-danger">Logout</button>
-            </>
-          )}
-        </nav>
+    <nav className="bg-slate-900 text-white p-4 shadow-lg">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
+        {/* Left: logo + name */}
+        <div className="flex items-center gap-3">
+          <Shield className="w-6 h-6 text-blue-400" />
+          <span className="font-bold text-lg">{appName}</span>
+        </div>
+
+        {/* Right: language switcher + login */}
+        <div className="flex items-center gap-3">
+          {rightSlot}
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            onClick={onLogin}
+          >
+            <LogIn className="w-5 h-5" />
+            <span className="font-medium">{loginLabel}</span>
+          </button>
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }
