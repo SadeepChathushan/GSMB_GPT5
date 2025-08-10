@@ -1,5 +1,5 @@
 import { useState, useContext, createContext, useEffect } from "react";
-import { Search, Truck, MapPin, Shield, AlertTriangle, CheckCircle, XCircle, Globe } from "lucide-react";
+import { Search, Truck, MapPin, Shield, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import Navbar from "../components/Navbar.jsx";
 
 /* ---------------------- Multilingual Setup ---------------------- */
@@ -159,31 +159,6 @@ function LanguageProvider({ children }) {
   );
 }
 
-/* ---------------------- UI Components ---------------------- */
-
-function LanguageSwitcher() {
-  const { lang, setLang, t } = useLanguage();
-  const btnBase = "px-2.5 py-1.5 rounded-md text-sm font-medium border transition-all duration-150";
-  const active = "bg-white text-slate-900 border-white shadow";
-  const inactive = "bg-white/10 text-white/90 border-white/20 hover:bg-white/20 hover:text-white";
-
-  return (
-    <div className="flex items-center gap-2">
-      <Globe className="w-4 h-4 text-white/90" />
-      <span className="sr-only">{t("switcher.label")}</span>
-      <button className={`${btnBase} ${lang === "en" ? active : inactive}`} onClick={() => setLang("en")} aria-pressed={lang === "en"}>
-        EN
-      </button>
-      <button className={`${btnBase} ${lang === "si" ? active : inactive}`} onClick={() => setLang("si")} aria-pressed={lang === "si"}>
-        සිං
-      </button>
-      <button className={`${btnBase} ${lang === "ta" ? active : inactive}`} onClick={() => setLang("ta")} aria-pressed={lang === "ta"}>
-        தமிழ்
-      </button>
-    </div>
-  );
-}
-
 const StatusBadge = ({ status }) => {
   const { t } = useLanguage();
   const cfg = {
@@ -223,7 +198,7 @@ const api = {
 /* ---------------------- Page ---------------------- */
 
 function Content() {
-  const { t } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
   const [lorry, setLorry] = useState("");
   const [result, setResult] = useState(null);
   const [reportDone, setReportDone] = useState(false);
@@ -277,7 +252,8 @@ function Content() {
         appName={t("appName")}
         loginLabel={t("nav.login")}
         onLogin={() => (window.location.href = "/login")}
-        rightSlot={<LanguageSwitcher />}
+        lang={lang}
+        onSetLang={setLang}
       />
 
       {/* Hero */}
